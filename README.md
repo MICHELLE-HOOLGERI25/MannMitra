@@ -16,12 +16,12 @@
 MannMitra/
 ├─ app.py
 ├─ content/
-│  ├─ who5.json
-│  ├─ exercises.json
-│  └─ helplines_in.json
-├─ data/           # local logs (ignored)
-│  └─ mood_log.csv (created at runtime)
-├─ .env            # not committed
+│ ├─ who5.json
+│ ├─ exercises.json
+│ └─ helplines_in.json
+├─ data/ # local logs (ignored)
+│ └─ mood_log.csv (created at runtime)
+├─ .env # not committed
 ├─ .gitignore
 └─ requirements.txt
 
