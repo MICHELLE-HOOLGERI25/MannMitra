@@ -1,7 +1,7 @@
 # MannMitra — Youth Mental Wellness (Prototype)
 
 > A confidential, empathetic **Streamlit** app for Indian youth mental wellness.  
-> Built for **H2S Gen AI Exchange Hackathon** using **Google Gemini** (optional) + privacy-first local storage.
+> Built for **H2S Gen AI Exchange Hackathon** using **Google Gemini** + privacy-first local storage.
 
 ## ✨ Features
 - Anonymous **chat** (English / हिन्दी / Hinglish), stigma-free tone  
@@ -13,15 +13,21 @@
 - **Quick Hide** screen, **session recap** download
 
 ## 🧱 Structure
+## 📁 Structure
+
+~~~
 MannMitra/
 ├─ app.py
 ├─ content/
-│ ├─ who5.json
-│ ├─ exercises.json
-│ └─ helplines_in.json
-├─ data/ # local logs (ignored)
-│ └─ mood_log.csv (created at runtime)
-├─ .env # not committed
+│  ├─ who5.json
+│  ├─ exercises.json
+│  └─ helplines_in.json
+├─ data/           # local logs (ignored)
+│  └─ mood_log.csv (created at runtime)
+├─ .env            # not committed
 ├─ .gitignore
 └─ requirements.txt
+~~~
+
+
 
