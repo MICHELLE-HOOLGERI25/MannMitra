@@ -1,0 +1,5 @@
+{
+  "kiran":      { "name": "KIRAN (GoI)",  "phone": "1800-599-0019", "hours": "24x7" },
+  "tele_manas": { "name": "Tele-MANAS",   "phone": "14416",         "alt": "1800-891-4416", "hours": "24x7" },
+  "icall":      { "name": "iCALL (TISS)", "phone": "9152987821",    "alt": "022-25521111",  "hours": "Mon–Sat" }
+}

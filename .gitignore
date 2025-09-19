@@ -1,0 +1,20 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Secrets / local config
+.env
+
+# Local data & logs (keep folder, ignore files)
+data/*.csv
+data/*.parquet
+data/*.json
+
+# Streamlit local config
+.streamlit/
+
+# VS Code
+.vscode/
