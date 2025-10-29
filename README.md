@@ -50,21 +50,26 @@ It provides a safe, calming, and interactive space for self-reflection, mood tra
 
 MannMitra/
 │
-├── app.py                 # Main Streamlit app
-├── badges_logs.py         # XP, badges, and logs
-├── requirements.txt       # Dependencies
-├── README.md              # Documentation
-├── .env                   # API keys (not uploaded)
-├── .gitignore             # Ignored files
+├── app.py # Main Streamlit app
+├── badges_logs.py # XP, badges, and logs
+├── requirements.txt # Dependencies
+├── README.md # Documentation
+├── .env # API keys (not uploaded)
+├── .gitignore # Ignored files
 │
-├── assets/                # Images, icons, and audio files
-├── content/               # Text/JSON content (helplines, etc.)
-└── data/                  # Local DB and user data
-    ├── mannmitra.db
-    ├── mood_log.csv
-    ├── gratitude.csv
-    └── users.json
+├── assets/ # Images, icons, and audio files
+├── content/ # Text/JSON content (helplines, etc.)
+└── data/ # Local DB and user data
+├── mannmitra.db
+├── mood_log.csv
+├── gratitude.csv
+└── users.json
+
+yaml
+Copy code
+
 ---
+
 
 ## 🚀 Run the App Locally
 
