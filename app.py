@@ -736,13 +736,20 @@ if not ss.authenticated:
             u2 = st.text_input("Choose User ID", key="signup_uid")
             p2 = st.text_input("Choose Password", type="password", key="signup_pwd")
             pin2 = st.text_input("Set 4-digit PIN (for stealth)", key="signup_pin")
+        
+        # ✅ Submit button must be INSIDE the form
             make = st.form_submit_button("Create Account", type="primary", use_container_width=True)
-        if make:
-            if not (u2 and p2 and pin2 and pin2.isdigit() and len(pin2) == 4):
+
+            if make:
+              if not (u2 and p2 and pin2 and pin2.isdigit() and len(pin2) == 4):
                 st.warning("Please fill all fields. PIN must be 4 digits.")
-            else:
+              else:
                 ok, msg = create_user(u2, p2, pin2)
-                st.success(msg) if ok else st.error(msg)
+                if ok:
+                    st.success("✅ Account created successfully!")
+                else:
+                    st.error(f"⚠️ {msg}")
+
 
     st.markdown("</div></div>", unsafe_allow_html=True)
     st.stop()
