@@ -47,7 +47,7 @@ It provides a safe, calming, and interactive space for self-reflection, mood tra
 ---
 
 ## 📂 Project Structure
-
+~~~
 MannMitra/
 │
 ├── app.py # Main Streamlit app
@@ -64,9 +64,7 @@ MannMitra/
 ├── mood_log.csv
 ├── gratitude.csv
 └── users.json
-
-yaml
-Copy code
+~~~
 
 ---
 
