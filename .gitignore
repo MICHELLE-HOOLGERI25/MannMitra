@@ -18,3 +18,4 @@ data/*.json
 
 # VS Code
 .vscode/
+data/*.db

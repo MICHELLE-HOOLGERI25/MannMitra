@@ -1,12 +1,7 @@
-{
-  "instrument": "WHO-5",
-  "scale": "0-5",
-  "items": [
-    "I have felt cheerful and in good spirits.",
-    "I have felt calm and relaxed.",
-    "I have felt active and vigorous.",
-    "I woke up feeling fresh and rested.",
-    "My daily life has been filled with things that interest me."
-  ],
-  "scoring": "sum*4 -> 0–100"
-}
+[
+  "I felt cheerful today.",
+  "I felt calm and relaxed.",
+  "I felt active and vigorous.",
+  "I woke up feeling fresh and rested.",
+  "My day was filled with things that interest me."
+]

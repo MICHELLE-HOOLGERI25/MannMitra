@@ -1,5 +1,30 @@
 {
-  "kiran":      { "name": "KIRAN (GoI)",  "phone": "1800-599-0019", "hours": "24x7" },
-  "tele_manas": { "name": "Tele-MANAS",   "phone": "14416",         "alt": "1800-891-4416", "hours": "24x7" },
-  "icall":      { "name": "iCALL (TISS)", "phone": "9152987821",    "alt": "022-25521111",  "hours": "Mon–Sat" }
+  "common": [
+    {
+      "title": "🚨 Emergency",
+      "items": [
+        { "label": "Single Emergency (Police/Fire/Health)", "number": "112", "note": "Pan-India ERSS, 24×7" },
+        { "label": "Ambulance (Emergency)", "number": "108" },
+        { "label": "Ambulance (Patient Transport)", "number": "102" }
+      ]
+    },
+    {
+      "title": "🧠 Mental Wellness (National)",
+      "items": [
+        { "label": "Tele-MANAS — 24×7 Counselling", "number": "14416", "alt": "1800-891-4416", "note": "Govt. of India; multilingual" },
+        { "label": "NIMHANS Mental Health Helpline", "number": "080-4611-0007" },
+        { "label": "CHILDLINE (for children)", "number": "1098" }
+      ]
+    },
+    {
+      "title": "🛡️ Protection & Legal",
+      "items": [
+        { "label": "Women Helpline", "number": "181" },
+        { "label": "Elderline (Senior Citizens)", "number": "14567" },
+        { "label": "Cybercrime Helpline", "number": "1930" },
+        { "label": "NALSA — National Legal Aid", "number": "15100" }
+      ]
+    }
+  ],
+  "states": {}
 }
