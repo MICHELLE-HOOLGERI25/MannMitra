@@ -1,13 +1,18 @@
 import sqlite3
 import os
+import streamlit as st
 
-DB_PATH = os.path.join("data", "mannmitra.db")
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "mannmitra.db")
 
+@st.cache_resource
 def get_connection():
-    # ensure /data exists
-    os.makedirs("data", exist_ok=True)
-    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False, timeout=30)
+    conn.execute("PRAGMA journal_mode=WAL;")      # ✅ allows concurrent reads/writes
+    conn.execute("PRAGMA busy_timeout=30000;")    # ✅ waits before failing if locked
+    conn.execute("PRAGMA synchronous=NORMAL;")    # ✅ balances safety & performance
+    conn.execute("PRAGMA foreign_keys=ON;")
     return conn
+
 
 def init_db():
     conn = get_connection()
@@ -27,7 +32,6 @@ def init_db():
         )
     """)
     conn.commit()
-    conn.close()
 
 if __name__ == "__main__":
     init_db()
