@@ -45,4 +45,3 @@ def init_db():
     """)
 
     conn.commit()
-    # ❌ Do NOT close the connection here
