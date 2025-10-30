@@ -2646,7 +2646,8 @@ def classify_day(score: int) -> str:
 # ========= Tree image handling =========
 def get_tree_image_path(stage: int) -> str:
     """Return correct image path for given stage (0–6)."""
-    return os.path.join("assets", f"tree_stage_{stage}.png")
+    base = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base, "assets", f"tree_stage_{stage}.png")
 
 
 def render_tree(stage: int, placeholder):
@@ -2660,7 +2661,7 @@ def render_tree(stage: int, placeholder):
         # Center the image cleanly
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            st.image(img_path, width=380, use_container_width=False)
+            st.image(img_path, width=380)
 
 
 
@@ -2679,6 +2680,7 @@ from badges_logs import log_activity  # keep this import at top with your others
 
 def page_diary():
     conn = get_connection()
+    conn.execute("PRAGMA busy_timeout=30000;")
     today = date.today().isoformat()
     if "username" not in st.session_state:
         st.session_state["username"] = "guest"
@@ -2710,39 +2712,57 @@ def page_diary():
         who_total = int(sum(who_scores))  # 5–25
 
         # Save WHO-5
-        if st.button("💾 Save WHO-5 Response"):
-            conn.execute(
-                """
-                INSERT OR REPLACE INTO user_mood
-                    (username, date, who5_score, reflection1, reflection2, reflection3,
-                     inferred_mood, growth_score)
-                VALUES (
-                    ?, ?, ?,
-                    COALESCE((SELECT reflection1 FROM user_mood WHERE username=? AND date=?), ''),
-                    COALESCE((SELECT reflection2 FROM user_mood WHERE username=? AND date=?), ''),
-                    COALESCE((SELECT reflection3 FROM user_mood WHERE username=? AND date=?), ''),
-                    COALESCE((SELECT inferred_mood FROM user_mood WHERE username=? AND date=?), ''),
-                    ?
+        saving = st.session_state.get("who_saving", False)
+        save_btn = st.button("💾 Save WHO-5 Response", disabled=saving)
+
+        if save_btn and not saving:
+            st.session_state["who_saving"] = True
+            try:
+                import sqlite3, time
+                for attempt in range(3):
+                    try:
+                        conn.execute(
+                            """
+                            INSERT OR REPLACE INTO user_mood
+                                (username, date, who5_score, reflection1, reflection2, reflection3,
+                                 inferred_mood, growth_score)
+                            VALUES (
+                                ?, ?, ?,
+                                COALESCE((SELECT reflection1 FROM user_mood WHERE username=? AND date=?), ''),
+                                COALESCE((SELECT reflection2 FROM user_mood WHERE username=? AND date=?), ''),
+                                COALESCE((SELECT reflection3 FROM user_mood WHERE username=? AND date=?), ''),
+                                COALESCE((SELECT inferred_mood FROM user_mood WHERE username=? AND date=?), ''),
+                                ?
+                            )
+                            """,
+                            (
+                                user, today, who_total,
+                                user, today, user, today, user, today, user, today,
+                                who_total / 25.0,
+                            ),
+                        )
+                        conn.commit()
+                        break
+                    except sqlite3.OperationalError as e:
+                        if "locked" in str(e).lower() and attempt < 2:
+                            time.sleep(0.25 * (attempt + 1))
+                            continue
+                        else:
+                            raise
+
+                st.session_state["saved_who_score"] = who_total
+                st.session_state["animated_today"] = False
+
+                # Log WHO-5 to Activities
+                log_activity(
+                    st.session_state.get("user_id", "demo-user"),
+                    "mood_entry",
+                    {"who5": who_total, "mood": classify_day(who_total)}
                 )
-                """,
-                (
-                    user, today, who_total,
-                    user, today, user, today, user, today, user, today,
-                    who_total / 25.0,
-                ),
-            )
-            conn.commit()
-            st.session_state["saved_who_score"] = who_total
-            st.session_state["animated_today"] = False
 
-            # Log WHO-5 to Activities
-            log_activity(
-                st.session_state.get("user_id", "demo-user"),
-                "mood_entry",
-                {"who5": who_total, "mood": classify_day(who_total)}
-            )
-
-            st.success(f"Saved! Score: {who_total}/25 — {classify_day(who_total)}")
+                st.success(f"Saved! Score: {who_total}/25 — {classify_day(who_total)}")
+            finally:
+                st.session_state["who_saving"] = False
 
         # Tree visualization
         st.subheader("🌳 Your Growth Tree")
@@ -2821,8 +2841,6 @@ def page_diary():
     conn.close()
 
 
-
-
 # --- Sync today's diary/WHO-5 into Badges & Logs activity (no changes to page_diary) ---
 def _sync_diary_activity_for_today():
     import sqlite3, datetime
@@ -2838,15 +2856,19 @@ def _sync_diary_activity_for_today():
     user_id = ss["user_id"]
     today = datetime.date.today().isoformat()
 
-    con = sqlite3.connect(DB_PATH); con.row_factory = sqlite3.Row
+    con = sqlite3.connect(DB_PATH)
+    con.row_factory = sqlite3.Row
     cur = con.cursor()
 
     # Pull today's saved reflections + WHO-5 (page_diary already writes user_mood)
-    row = cur.execute("""
+    row = cur.execute(
+        """
         SELECT reflection1, reflection2, reflection3, who5_score
         FROM user_mood
         WHERE username=? AND date=?
-    """, (username, today)).fetchone()
+        """,
+        (username, today)
+    ).fetchone()
 
     if row:
         # 1) Log a journal entry (once/day) if any reflection text exists
@@ -2856,28 +2878,35 @@ def _sync_diary_activity_for_today():
             (row["reflection3"] or "").strip(),
         ]).strip()
 
-        already_journal = cur.execute("""
+        already_journal = cur.execute(
+            """
             SELECT 1 FROM user_activity_log
             WHERE user_id=? AND kind='journal_entry' AND date=?
             LIMIT 1
-        """, (user_id, today)).fetchone()
+            """,
+            (user_id, today)
+        ).fetchone()
 
         if note and not already_journal:
             log_activity(user_id, "journal_entry", {"note": note})
 
         # 2) Log a mood/WHO-5 entry (once/day) if a score exists
         score = int(row["who5_score"] or 0)
-        already_mood = cur.execute("""
+        already_mood = cur.execute(
+            """
             SELECT 1 FROM user_activity_log
             WHERE user_id=? AND kind='mood_entry' AND date=?
             LIMIT 1
-        """, (user_id, today)).fetchone()
+            """,
+            (user_id, today)
+        ).fetchone()
 
         if score > 0 and not already_mood:
             # (Optional label from score—kept simple here to avoid importing page_diary logic)
             log_activity(user_id, "mood_entry", {"who5": score})
 
     con.close()
+
 
 
 
