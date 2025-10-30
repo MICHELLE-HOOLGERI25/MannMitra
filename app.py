@@ -2745,7 +2745,7 @@ def page_diary():
                         break
                     except sqlite3.OperationalError as e:
                         if "locked" in str(e).lower() and attempt < 2:
-                            time.sleep(0.25 * (attempt + 1))
+                            time.sleep(1.5) 
                             continue
                         else:
                             raise
@@ -2838,7 +2838,7 @@ def page_diary():
                     st.success("🌟 Reflections saved successfully.")
                     st.caption("💚 Thank you for sharing — your reflections water your growth.")
 
-    conn.close()
+    
 
 
 # --- Sync today's diary/WHO-5 into Badges & Logs activity (no changes to page_diary) ---
