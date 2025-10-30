@@ -2582,7 +2582,12 @@ import pandas as pd
 from data.db_setup import get_connection, init_db
 
 # Ensure database exists
-init_db()
+# Ensure database exists
+if "db_initialized" not in st.session_state:
+    from data.db_setup import init_db
+    init_db()
+    st.session_state["db_initialized"] = True
+
 
 
 # ========= WHO-5 emoji selector =========
