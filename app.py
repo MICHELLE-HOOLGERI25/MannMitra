@@ -2543,25 +2543,6 @@ import streamlit as st
 import pandas as pd
 from data.db_setup import get_connection, init_db
 
-from pathlib import Path
-from PIL import Image
-import streamlit as st
-
-# If this .py file sits next to the assets/ folder:
-ASSETS_DIR = Path(__file__).resolve().parent / "assets"
-
-@st.cache_resource
-def load_tree_images():
-    imgs = {}
-    for s in range(7):
-        p = ASSETS_DIR / f"tree_stage_{s}.png"
-        imgs[s] = Image.open(p) if p.exists() else None
-    return imgs
-
-TREE_IMAGES = load_tree_images()
-
-
-
 # Ensure database exists
 init_db()
 
@@ -2574,7 +2555,7 @@ def emoji_scale(label, key):
         st.session_state[key] = 3
     for i, emo in enumerate(options, start=1):
         with cols[i - 1]:
-            if st.button(emo, key=f"{key}_{i}", width="stretch"):
+            if st.button(emo, key=f"{key}_{i}", use_container_width=True):
                 st.session_state[key] = i
     st.caption(label)
     return st.session_state[key]
@@ -2631,16 +2612,17 @@ def get_tree_image_path(stage: int) -> str:
 
 
 def render_tree(stage: int, placeholder):
-    img = TREE_IMAGES.get(stage)
-    if img is None:
-        placeholder.error(f"⚠️ Missing image: {ASSETS_DIR / f'tree_stage_{stage}.png'}")
+    """Display a centered image of the given tree growth stage."""
+    img_path = get_tree_image_path(stage)
+    if not os.path.exists(img_path):
+        placeholder.error(f"⚠ Missing image for stage {stage}: {img_path}")
         return
+
     with placeholder.container():
-        _, center, _ = st.columns([1, 2, 1])
-        with center:
-            st.image(img, width="content")
-
-
+        # Center the image cleanly
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.image(img_path, width=380, use_container_width=False)
 
 
 
@@ -2683,7 +2665,7 @@ def page_diary():
             "I felt cheerful and optimistic 🌞",
             "I felt calm and peaceful 🌿",
             "I felt energetic and active ⚡",
-            "I woke up feeling rested ☀️",
+            "I woke up feeling rested ☀",
             "My day was interesting and meaningful 🌸",
         ]
         who_scores = [emoji_scale(q, f"who_{i}") for i, q in enumerate(qs)]
@@ -2722,7 +2704,7 @@ def page_diary():
                 {"who5": who_total, "mood": classify_day(who_total)}
             )
 
-            st.success(f"Saved! Score: *{who_total}/25* — {classify_day(who_total)}")
+            st.success(f"Saved! Score: {who_total}/25 — {classify_day(who_total)}")
 
         # Tree visualization
         st.subheader("🌳 Your Growth Tree")
