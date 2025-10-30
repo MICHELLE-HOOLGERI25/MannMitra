@@ -683,22 +683,44 @@ st.markdown("""
 
 
 
-# ---------------------- Auth / Login ----------------------
+
+
 def create_user(username, password, pin):
     pw_hash = hash_pw(password)
+    username = username.strip()
+
     try:
-        conn.execute("INSERT INTO users(username, password_hash, pin) VALUES (?,?,?)", (username, pw_hash, pin))
+        # Remember change counter before the insert
+        before = conn.total_changes
+
+        # If username is new -> row inserted; if it already exists -> insert is ignored (no error)
+        conn.execute(
+            "INSERT OR IGNORE INTO users(username, password_hash, pin) VALUES (?,?,?)",
+            (username, pw_hash, pin)
+        )
         conn.commit()
-        return True, "Account created."
-    except sqlite3.IntegrityError:
-        return False, "Username already exists."
+
+        # If total_changes increased, we actually created the account
+        if conn.total_changes > before:
+            return True, "Account created."
+        else:
+            return False, "Username already exists."
+    except sqlite3.OperationalError as e:
+        # Handles brief "database is locked" bursts on very fast double-clicks
+        if "locked" in str(e).lower():
+            return False, "Please wait a moment and try again."
+        raise
+
+
 
 def check_user(username, password):
+    username = username.strip()
     cur = conn.execute("SELECT password_hash FROM users WHERE username=?", (username,))
     row = cur.fetchone()
     if row:
         return bcrypt.checkpw(password.encode(), row[0]) if isinstance(row[0], (bytes, bytearray)) else (row[0] == password)
     return False
+
 
 if not ss.authenticated:
     # Match pill width
@@ -733,26 +755,42 @@ if not ss.authenticated:
 
     with tab_signup:
         with st.form("signup_form", clear_on_submit=False):
-            u2 = st.text_input("Choose User ID", key="signup_uid")
-            p2 = st.text_input("Choose Password", type="password", key="signup_pwd")
-            pin2 = st.text_input("Set 4-digit PIN (for stealth)", key="signup_pin")
-        
+          u2 = st.text_input("Choose User ID", key="signup_uid")
+          p2 = st.text_input("Choose Password", type="password", key="signup_pwd")
+          pin2 = st.text_input("Set 4-digit PIN (for stealth)", key="signup_pin")
+    
         # ✅ Submit button must be INSIDE the form
-            make = st.form_submit_button("Create Account", type="primary", use_container_width=True)
+          make = st.form_submit_button(
+            "Create Account",
+            type="primary",
+            use_container_width=True,
+            disabled=st.session_state.get("signup_processing", False)
+        )
 
-            if make:
-              if not (u2 and p2 and pin2 and pin2.isdigit() and len(pin2) == 4):
-                st.warning("Please fill all fields. PIN must be 4 digits.")
-              else:
-                ok, msg = create_user(u2, p2, pin2)
-                if ok:
-                    st.success("✅ Account created successfully!")
+        if make and not st.session_state.get("signup_processing", False):
+            st.session_state["signup_processing"] = True
+            try:
+                if not (u2 and p2 and pin2 and pin2.isdigit() and len(pin2) == 4):
+                    st.warning("Please fill all fields. PIN must be 4 digits.")
                 else:
-                    st.error(f"⚠️ {msg}")
+                    ok, msg = create_user(u2, p2, pin2)
+                    if ok:
+                        st.success("✅ Account created successfully!")
+                    else:
+                        st.error(f"⚠️ {msg}")
+            finally:
+                st.session_state["signup_processing"] = False
+
 
 
     st.markdown("</div></div>", unsafe_allow_html=True)
     st.stop()
+
+
+
+
+
+
 
 # ---------------------- Stealth screen ----------------------
 if ss.stealth:
