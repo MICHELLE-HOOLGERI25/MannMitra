@@ -12,14 +12,7 @@ import numpy as np
 import pandas as pd
 from PIL import Image, ImageDraw
 import streamlit as st
-
-
-# ===== Global button theming (presets + custom picker) =====
 from colorsys import rgb_to_yiq
-
-
-
-
 
 # Optional libs (app still runs if missing)
 try:
@@ -57,7 +50,6 @@ try:
 except Exception:
     HAS_MIC = False
 
-# ---------------------- Settings ----------------------
 # ---------------------- Settings ----------------------
 st.set_page_config(
     page_title="MannMitra",
@@ -195,7 +187,7 @@ button[title="Expand sidebar"]:hover{
 
 
 # ====================== GLOBAL BUTTON THEME (STATIC PRESETS) ======================
-# Pick from these only (we'll keep it static).
+
 ALLOWED_BUTTON_COLORS = {
     "Slate":            "#64748b",   # you liked this
     "Pastel Blue":      "#93c5fd",
@@ -352,23 +344,7 @@ ss.setdefault("chat", [])
 ss.setdefault("force_sidebar_open", True)  # ensures we can always reopen the sidebar
 
 
-# ---------------------- Sidebar visibility ----------------------
-# ---------------------- Sidebar visibility ----------------------
-# ---------------------- Sidebar visibility ----------------------
-# ---------------------- Sidebar visibility ----------------------
-# ---------------------- Sidebar visibility ---------------------
-# ---------------------- Sidebar visibility ----------------------
-# ---------------------- Sidebar visibility ----------------------
-# ---------------------- Sidebar visibility ----------------------
-# ---------------------- Sidebar visibility ----------------------
-# ---------------------- Sidebar visibility (GPT-like open/close) ----------------------
-# Add this once with your other session defaults (keep here if not already added earlier)
-# ---------------------- Sidebar visibility (GPT-like open/close) ----------------------
-# ---------------------- Sidebar visibility (GPT-like open/close) ----------------------
-# ---------------------- Sidebar visibility (GPT-like open/close) ----------------------
-# ---------------------- Sidebar visibility (GPT-like open/close) ----------------------
-# ---------------------- Sidebar Visibility (GPT-like open/close) ----------------------
-# ---------------------- Sidebar Visibility (GPT-like open/close) ----------------------
+# ---------------------- Sidebar Visibility  ----------------------
 ss.setdefault("sidebar_open", True)
 ss.setdefault("applied_theme_hex", "#64748b")  # Persist across reruns within session
 
@@ -383,6 +359,12 @@ ALLOWED_BUTTON_COLORS = {
 }
 
 # Hide sidebar for intro screens (welcome, onboarding, confetti)
+# Trigger confetti immediately on first render of the confetti screen
+ss.setdefault("_confetti_shown", False)
+if ss.get("intro_step", "") == "confetti" and not ss._confetti_shown:
+    st.balloons()  # instant confetti effect on entry
+    ss._confetti_shown = True
+
 hidden_intro_steps = {"welcome", "onboarding", "confetti"}
 main_tabs = {"Chat", "Exercises", "Diary", "Games", "CommuniGrow", "Badges & Logs", "Helpline"}
 SHOW_SIDEBAR = (
@@ -392,7 +374,6 @@ SHOW_SIDEBAR = (
     and not ss.get("stealth", False)
 )
 
-# ========== SIDEBAR HIDDEN ==========
 # ========== SIDEBAR HIDDEN ==========
 if not SHOW_SIDEBAR:
     st.markdown("""
@@ -422,22 +403,25 @@ if not SHOW_SIDEBAR:
       #mm-hotspot button {
         width: 22px; height: 22px; padding: 0; border-radius: 50%;
         background: rgba(255,255,255,0.03); border: none; color: transparent;
-      }
+      } 
       #mm-hotspot button:hover { background: rgba(255,255,255,0.08); }
     </style>
     """, unsafe_allow_html=True)
 
     st.markdown('<div id="mm-hotspot">', unsafe_allow_html=True)
-    if st.button(" ", key="mm_hotspot_btn"):
-        if not ss._secret_window_start:
-            ss._secret_window_start = now
-        ss._secret_clicks += 1
-        if ss._secret_clicks >= 3:     # triple-tap to reveal
-            ss.stealth_unlock_until = now + _dt.timedelta(seconds=20)
-            ss._secret_clicks = 0
-            ss._secret_window_start = None
-        st.rerun()
+    if st.button(" ", key="mm_hotspot_btn", help="Tap thrice"):
+       if not ss._secret_window_start:
+        ss._secret_window_start = now
+       ss._secret_clicks += 1
+       if ss._secret_clicks >= 3:
+        ss.stealth_unlock_until = now + _dt.timedelta(seconds=20)
+        ss._secret_clicks = 0
+        ss._secret_window_start = None
+       st.rerun()
+
+    
     st.markdown('</div>', unsafe_allow_html=True)
+
 
     # 2) Small PIN popover (only visible for a short time)
     show_unlock = ss.get("stealth_unlock_until") and now < ss.stealth_unlock_until
@@ -3811,7 +3795,6 @@ def list_lessons(tag: str | None = None, limit: int = 50):
     con.close()
     return [{"id": r["id"], "title": r["title"], "content": r["content"], "tags": r["tags"]} for r in rows]
 
-# ---------- page (UI: blue–lilac; animations, no glow) ----------
 # ---------- page (UI: simple, Streamlit-native) ----------
 from badges_logs import log_sprout_view, log_affirmation_open, log_activity
 def page_communi():
