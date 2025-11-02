@@ -897,7 +897,11 @@ def chat_language_picker():
 
 
 
-# MannMitra
+
+
+
+# MannMitra 🌿 — GPT-Style Modern Calm UI (Final Polished Version)
+# MannMitra 🌿 — GPT-Style Modern Calm UI (Final Polished Version)
 import os
 import re
 import time
@@ -1177,7 +1181,26 @@ def page_chat():
 
 
 
-# ---------- EXERCISES PAGE ----------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ---------------------- Exercises (guided counting) ----------------------
+# ---------- EXERCISES PAGE (drop-in) ----------
+# ---------------------- Exercises (guided counting) ----------------------
+# ---------- EXERCISES PAGE (drop-in) ----------
 # ---------------------- IMPORTS ----------------------
 from time import time as _now
 
@@ -1562,7 +1585,12 @@ def _exercise_picker_ui(category_name: str):
         and ss.get("ex_total_cycles", 0) > 0
         and ss.get("ex_cycle_left", 0) == 0):
         st.success("Exercise complete! 🥳")
-  
+
+
+    
+
+    
+    
 
 # ---------- PAGE ----------
 def page_exercises():
@@ -2523,7 +2551,12 @@ def page_games():
 
 
 
+
 # ---------------------- DIARY (WHO-5 + Gratitude + Growing Tree) ----------------------
+# ---------------------- DIARY (WHO-5 + Gratitude + Growing Tree) ----------------------
+# Drop-in module: defines page_diary() and all helpers it needs.
+# Drop-in module: defines page_diary() and all helpers it needs.
+# -------------------------------
 from datetime import date
 import time
 import os
@@ -2868,6 +2901,9 @@ def _sync_diary_activity_for_today():
 
 
 # ---------------------- Helpline ----------------------
+# ---------------- Helplines (India) — print-only, pretty, no JSON ----------------
+# helplines.py
+# --- Helplines (national only, no state/city/search) ---
 import re
 import streamlit as st
 
@@ -2938,7 +2974,19 @@ def page_helpline():
 
 
 
-# =================== CommuniGrow ===================
+
+
+# ---------------------- COMMUNIGROW ----------------------
+# ===================== CommuniGrow (drop-in v2) ======================
+# Put this ABOVE your routing in app.py
+# ===================== CommuniGrow (v4: daily affirmation + new UI) ======================
+# Put this ABOVE your routing in app.py
+# ===================== CommuniGrow (v6: XP + Badges + Logs) ======================
+# ===================== CommuniGrow (v4: daily affirmation + new UI) ======================
+# =================== CommuniGrow (refreshed UI) ===================
+# =================== CommuniGrow (polished UI) ===================
+# =================== CommuniGrow (bold UI + fixed keys) ===================
+# =================== CommuniGrow (complete page) ===================
 # Imports
 import os, sqlite3, datetime, json, uuid, random
 import streamlit as st
@@ -3582,6 +3630,9 @@ def render_book_reader(lesson:dict):
 
 
 
+
+
+
 # ---------- logic ----------
 def _quote_to_tip(quote: str) -> str:
     q = quote.lower()
@@ -3862,6 +3913,17 @@ def page_communi():
 
 
 
+    
+
+
+
+
+
+
+
+
+
+
 # ===================== BADGES & LOGS PAGE (v2 with Journal & Mood) =====================
 import streamlit as st
 from badges_logs import (
@@ -3888,6 +3950,8 @@ from badges_logs import log_activity
 
 
 
+# =========================================
+# ---- all your page_* functions must be defined ABOVE this line ----
 # ---------------------- ROUTING ----------------------
 if ss.active_tab == "Chat":
     if ss.intro_step != "done":
