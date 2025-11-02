@@ -897,11 +897,7 @@ def chat_language_picker():
 
 
 
-
-
-
-# MannMitra 🌿 — GPT-Style Modern Calm UI (Final Polished Version)
-# MannMitra 🌿 — GPT-Style Modern Calm UI (Final Polished Version)
+# MannMitra
 import os
 import re
 import time
@@ -1181,26 +1177,7 @@ def page_chat():
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# ---------------------- Exercises (guided counting) ----------------------
-# ---------- EXERCISES PAGE (drop-in) ----------
-# ---------------------- Exercises (guided counting) ----------------------
-# ---------- EXERCISES PAGE (drop-in) ----------
+# ---------- EXERCISES PAGE ----------
 # ---------------------- IMPORTS ----------------------
 from time import time as _now
 
@@ -1585,12 +1562,7 @@ def _exercise_picker_ui(category_name: str):
         and ss.get("ex_total_cycles", 0) > 0
         and ss.get("ex_cycle_left", 0) == 0):
         st.success("Exercise complete! 🥳")
-
-
-    
-
-    
-    
+  
 
 # ---------- PAGE ----------
 def page_exercises():
@@ -2551,12 +2523,7 @@ def page_games():
 
 
 
-
 # ---------------------- DIARY (WHO-5 + Gratitude + Growing Tree) ----------------------
-# ---------------------- DIARY (WHO-5 + Gratitude + Growing Tree) ----------------------
-# Drop-in module: defines page_diary() and all helpers it needs.
-# Drop-in module: defines page_diary() and all helpers it needs.
-# -------------------------------
 from datetime import date
 import time
 import os
@@ -2564,23 +2531,13 @@ import re
 import streamlit as st
 import pandas as pd
 from data.db_setup import get_connection, init_db
-from badges_logs import init_badges_logs_schema  # ensure badges DB ready
 
-# --- one-time init + single identity for all logs ---
+# Ensure database exists
+# Ensure database exists
 if "db_initialized" not in st.session_state:
-    # Initialize both databases (diary + badges/logs)
+    from data.db_setup import init_db
     init_db()
-    init_badges_logs_schema()
-
-    # Set up unified identity for all tabs/pages
-    if "username" not in st.session_state:
-        st.session_state["username"] = "guest"
-    if "user_id" not in st.session_state:
-        st.session_state["user_id"] = st.session_state["username"]
-
-    # Mark initialization done
     st.session_state["db_initialized"] = True
-
 
 
 
@@ -2843,63 +2800,74 @@ def page_diary():
 # --- Sync today's diary/WHO-5 into Badges & Logs activity (no changes to page_diary) ---
 def _sync_diary_activity_for_today():
     import sqlite3, datetime
-    from badges_logs import log_activity, DB_PATH  
+    from badges_logs import log_activity, DB_PATH  # uses the same DB and logger
 
+    # Make sure the same ID is used across the app:
+    # If you already set ss.user_id elsewhere, keep it. Otherwise mirror username.
     ss = st.session_state
     username = ss.get("username", "guest")
     if "user_id" not in ss:
-        ss["user_id"] = username
+        ss["user_id"] = username  # align identity without touching page_diary()
 
     user_id = ss["user_id"]
     today = datetime.date.today().isoformat()
 
-    try:
-        con = sqlite3.connect(DB_PATH, timeout=30)
-        con.row_factory = sqlite3.Row
-        cur = con.cursor()
+    con = sqlite3.connect(DB_PATH)
+    con.row_factory = sqlite3.Row
+    cur = con.cursor()
 
-        row = cur.execute(
-            "SELECT reflection1, reflection2, reflection3, who5_score FROM user_mood WHERE username=? AND date=?",
-            (username, today)
+    # Pull today's saved reflections + WHO-5 (page_diary already writes user_mood)
+    row = cur.execute(
+        """
+        SELECT reflection1, reflection2, reflection3, who5_score
+        FROM user_mood
+        WHERE username=? AND date=?
+        """,
+        (username, today)
+    ).fetchone()
+
+    if row:
+        # 1) Log a journal entry (once/day) if any reflection text exists
+        note = " ".join([
+            (row["reflection1"] or "").strip(),
+            (row["reflection2"] or "").strip(),
+            (row["reflection3"] or "").strip(),
+        ]).strip()
+
+        already_journal = cur.execute(
+            """
+            SELECT 1 FROM user_activity_log
+            WHERE user_id=? AND kind='journal_entry' AND date=?
+            LIMIT 1
+            """,
+            (user_id, today)
         ).fetchone()
 
-        if row:
-            note = " ".join([(row["reflection1"] or ""), (row["reflection2"] or ""), (row["reflection3"] or "")]).strip()
-            if note:
-                already = cur.execute(
-                    "SELECT 1 FROM user_activity_log WHERE user_id=? AND kind='journal_entry' AND date=? LIMIT 1",
-                    (user_id, today)
-                ).fetchone()
-                if not already:
-                    log_activity(user_id, "journal_entry", {"note": note})
+        if note and not already_journal:
+            log_activity(user_id, "journal_entry", {"note": note})
 
-            score = int(row["who5_score"] or 0)
-            if score > 0:
-                already = cur.execute(
-                    "SELECT 1 FROM user_activity_log WHERE user_id=? AND kind='mood_entry' AND date=? LIMIT 1",
-                    (user_id, today)
-                ).fetchone()
-                if not already:
-                    log_activity(user_id, "mood_entry", {"who5": score})
-    except sqlite3.OperationalError as e:
-        st.warning(f"⚠ Database busy — sync deferred: {e}")
-    except Exception as e:
-        st.warning(f"⚠ Sync error ignored: {e}")
-    finally:
-        try:
-            con.close()
-        except:
-            pass
+        # 2) Log a mood/WHO-5 entry (once/day) if a score exists
+        score = int(row["who5_score"] or 0)
+        already_mood = cur.execute(
+            """
+            SELECT 1 FROM user_activity_log
+            WHERE user_id=? AND kind='mood_entry' AND date=?
+            LIMIT 1
+            """,
+            (user_id, today)
+        ).fetchone()
 
+        if score > 0 and not already_mood:
+            # (Optional label from score—kept simple here to avoid importing page_diary logic)
+            log_activity(user_id, "mood_entry", {"who5": score})
+
+    con.close()
 
 
 
 
 
 # ---------------------- Helpline ----------------------
-# ---------------- Helplines (India) — print-only, pretty, no JSON ----------------
-# helplines.py
-# --- Helplines (national only, no state/city/search) ---
 import re
 import streamlit as st
 
@@ -2970,19 +2938,7 @@ def page_helpline():
 
 
 
-
-
-# ---------------------- COMMUNIGROW ----------------------
-# ===================== CommuniGrow (drop-in v2) ======================
-# Put this ABOVE your routing in app.py
-# ===================== CommuniGrow (v4: daily affirmation + new UI) ======================
-# Put this ABOVE your routing in app.py
-# ===================== CommuniGrow (v6: XP + Badges + Logs) ======================
-# ===================== CommuniGrow (v4: daily affirmation + new UI) ======================
-# =================== CommuniGrow (refreshed UI) ===================
-# =================== CommuniGrow (polished UI) ===================
-# =================== CommuniGrow (bold UI + fixed keys) ===================
-# =================== CommuniGrow (complete page) ===================
+# =================== CommuniGrow ===================
 # Imports
 import os, sqlite3, datetime, json, uuid, random
 import streamlit as st
@@ -3626,9 +3582,6 @@ def render_book_reader(lesson:dict):
 
 
 
-
-
-
 # ---------- logic ----------
 def _quote_to_tip(quote: str) -> str:
     q = quote.lower()
@@ -3909,17 +3862,6 @@ def page_communi():
 
 
 
-    
-
-
-
-
-
-
-
-
-
-
 # ===================== BADGES & LOGS PAGE (v2 with Journal & Mood) =====================
 import streamlit as st
 from badges_logs import (
@@ -3946,8 +3888,6 @@ from badges_logs import log_activity
 
 
 
-# =========================================
-# ---- all your page_* functions must be defined ABOVE this line ----
 # ---------------------- ROUTING ----------------------
 if ss.active_tab == "Chat":
     if ss.intro_step != "done":
