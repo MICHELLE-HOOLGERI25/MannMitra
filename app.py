@@ -2833,68 +2833,54 @@ def page_diary():
 # --- Sync today's diary/WHO-5 into Badges & Logs activity (no changes to page_diary) ---
 def _sync_diary_activity_for_today():
     import sqlite3, datetime
-    from badges_logs import log_activity, DB_PATH  # uses the same DB and logger
+    from badges_logs import log_activity, DB_PATH  
 
-    # Make sure the same ID is used across the app:
-    # If you already set ss.user_id elsewhere, keep it. Otherwise mirror username.
     ss = st.session_state
     username = ss.get("username", "guest")
     if "user_id" not in ss:
-        ss["user_id"] = username  # align identity without touching page_diary()
+        ss["user_id"] = username
 
     user_id = ss["user_id"]
     today = datetime.date.today().isoformat()
 
-    con = sqlite3.connect(DB_PATH)
-    con.row_factory = sqlite3.Row
-    cur = con.cursor()
+    try:
+        con = sqlite3.connect(DB_PATH, timeout=30)
+        con.row_factory = sqlite3.Row
+        cur = con.cursor()
 
-    # Pull today's saved reflections + WHO-5 (page_diary already writes user_mood)
-    row = cur.execute(
-        """
-        SELECT reflection1, reflection2, reflection3, who5_score
-        FROM user_mood
-        WHERE username=? AND date=?
-        """,
-        (username, today)
-    ).fetchone()
-
-    if row:
-        # 1) Log a journal entry (once/day) if any reflection text exists
-        note = " ".join([
-            (row["reflection1"] or "").strip(),
-            (row["reflection2"] or "").strip(),
-            (row["reflection3"] or "").strip(),
-        ]).strip()
-
-        already_journal = cur.execute(
-            """
-            SELECT 1 FROM user_activity_log
-            WHERE user_id=? AND kind='journal_entry' AND date=?
-            LIMIT 1
-            """,
-            (user_id, today)
+        row = cur.execute(
+            "SELECT reflection1, reflection2, reflection3, who5_score FROM user_mood WHERE username=? AND date=?",
+            (username, today)
         ).fetchone()
 
-        if note and not already_journal:
-            log_activity(user_id, "journal_entry", {"note": note})
+        if row:
+            note = " ".join([(row["reflection1"] or ""), (row["reflection2"] or ""), (row["reflection3"] or "")]).strip()
+            if note:
+                already = cur.execute(
+                    "SELECT 1 FROM user_activity_log WHERE user_id=? AND kind='journal_entry' AND date=? LIMIT 1",
+                    (user_id, today)
+                ).fetchone()
+                if not already:
+                    log_activity(user_id, "journal_entry", {"note": note})
 
-        # 2) Log a mood/WHO-5 entry (once/day) if a score exists
-        score = int(row["who5_score"] or 0)
-        already_mood = cur.execute(
-            """
-            SELECT 1 FROM user_activity_log
-            WHERE user_id=? AND kind='mood_entry' AND date=?
-            LIMIT 1
-            """,
-            (user_id, today)
-        ).fetchone()
+            score = int(row["who5_score"] or 0)
+            if score > 0:
+                already = cur.execute(
+                    "SELECT 1 FROM user_activity_log WHERE user_id=? AND kind='mood_entry' AND date=? LIMIT 1",
+                    (user_id, today)
+                ).fetchone()
+                if not already:
+                    log_activity(user_id, "mood_entry", {"who5": score})
+    except sqlite3.OperationalError as e:
+        st.warning(f"⚠ Database busy — sync deferred: {e}")
+    except Exception as e:
+        st.warning(f"⚠ Sync error ignored: {e}")
+    finally:
+        try:
+            con.close()
+        except:
+            pass
 
-        if score > 0 and not already_mood:
-            # (Optional label from score—kept simple here to avoid importing page_diary logic)
-            log_activity(user_id, "mood_entry", {"who5": score})
-
-    con.close()
 
 
 
