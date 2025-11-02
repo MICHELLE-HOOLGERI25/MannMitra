@@ -2564,13 +2564,23 @@ import re
 import streamlit as st
 import pandas as pd
 from data.db_setup import get_connection, init_db
+from badges_logs import init_badges_logs_schema  # ensure badges DB ready
 
-# Ensure database exists
-# Ensure database exists
+# --- one-time init + single identity for all logs ---
 if "db_initialized" not in st.session_state:
-    from data.db_setup import init_db
+    # Initialize both databases (diary + badges/logs)
     init_db()
+    init_badges_logs_schema()
+
+    # Set up unified identity for all tabs/pages
+    if "username" not in st.session_state:
+        st.session_state["username"] = "guest"
+    if "user_id" not in st.session_state:
+        st.session_state["user_id"] = st.session_state["username"]
+
+    # Mark initialization done
     st.session_state["db_initialized"] = True
+
 
 
 
