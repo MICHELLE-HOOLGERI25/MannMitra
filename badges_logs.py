@@ -2,8 +2,12 @@
 import os, json, sqlite3, csv, datetime, hashlib
 import streamlit as st
 
-DB_PATH = os.path.join("data", "mannmitra.db")
-os.makedirs("data", exist_ok=True)
+# DB_PATH = os.path.join("data", "mannmitra.db")
+# os.makedirs("data", exist_ok=True)
+
+# NEW:
+from data.db_setup import DB_PATH  # ← use the shared path
+os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
 USER_STORE = os.path.join("data", "users.json")
 
@@ -128,7 +132,7 @@ _XP_DEFAULTS = {
     "daily_visit": 1,          # <-- ADD THIS
 }
 
-_ONCE_PER_DAY = {"sprout_view", "affirmation_open", "mood_entry", "journal_entry", "daily_visit"}  # <-- ADD daily_visit
+_ONCE_PER_DAY = {"sprout_view", "affirmation_open", "journal_entry", "daily_visit"}  # <-- ADD daily_visit
 
 def _add_xp(user_id, xp):
     con = _db(); cur = con.cursor()
@@ -189,6 +193,8 @@ def _payload_fingerprint(kind: str, payload: dict | None) -> str:
             "exercise": p.get("exercise"),
             "game": p.get("game"),
             "xp": p.get("xp"),
+            "who5": p.get("who5"),     # <-- Add this
+            "mood": p.get("mood"),   
         }
     blob = json.dumps(key, sort_keys=True, ensure_ascii=False)
     return hashlib.sha1(blob.encode("utf-8")).hexdigest()
@@ -201,6 +207,7 @@ def log_activity(user_id: str, kind: str, payload: dict | None = None):
     con = _db(); cur = con.cursor()
     inserted = False
     try:
+        cur.execute("DELETE FROM user_activity_log WHERE user_id=? AND kind=? AND date=?", (user_id, kind, today))
         cur.execute(
             "INSERT INTO user_activity_log(user_id,kind,date,payload,payload_hash) VALUES(?,?,?,?,?)",
             (user_id, kind, today, json.dumps(payload, ensure_ascii=False), fp)
@@ -290,10 +297,11 @@ def who5_label(score: int) -> str:
 def _summary_rows_for_date(user_id: str, date_iso: str, include_sprout: bool):
     con = _db(); cur = con.cursor()
     rows = cur.execute("""
-        SELECT kind, payload FROM user_activity_log
-        WHERE user_id=? AND date=?
-        ORDER BY id ASC
+    SELECT kind, payload FROM user_activity_log
+    WHERE user_id=? AND date=?
+    ORDER BY id ASC
     """, (user_id, date_iso)).fetchall()
+
     con.close()
 
     seen_sprout = False
